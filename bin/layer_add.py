@@ -17,7 +17,7 @@ def parse_args():
   parser.add_argument("-t", "--target", metavar="output-file", default="target", help="target path")
   parser.add_argument("-V", "--python-version", metavar="version", default="3.12", help="python version")
   # parser.add_argument("-", "--", action="store_true", help="")
-  parser.add_argument("name", metavar="input-file", help="input file")
+  parser.add_argument("name", metavar="layer-name", help="layer name")
   options = parser.parse_args()
   return options
 
