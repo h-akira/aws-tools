@@ -14,11 +14,13 @@ def parse_args():
 事前にpip3 install hoge -t targetとしてたうえで実行する
 """, formatter_class = argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("--version", action="version", version='%(prog)s 0.0.1')
-  parser.add_argument("-t", "--target", metavar="output-file", default="target", help="target path")
+  parser.add_argument("-t", "--target", metavar="target-directory", help="target of pip install -t, default is same as layer-name")
   parser.add_argument("-V", "--python-version", metavar="version", default="3.12", help="python version")
   # parser.add_argument("-", "--", action="store_true", help="")
   parser.add_argument("name", metavar="layer-name", help="layer name")
   options = parser.parse_args()
+  if options.target is None:
+    options.target = options.name
   return options
 
 def main():
