@@ -22,8 +22,16 @@ def parse_args():
     help="max requests to describe_log_groups, 1 request = 50 logGroups"
   )
   parser.add_argument(
+    "-i", "--indent", metavar="number", default =2, type=int,
+    help="indent of json output"
+  )
+  parser.add_argument(
     "-s", "--streams-limit", metavar="number", default =1, type=int,
     help="limit of streams to describe_log_streams"
+  )
+  parser.add_argument(
+    "-d", "--dumps-limit", metavar="number", default =5, type=int,
+    help="limit of dumps to output directory"
   )
   parser.add_argument("-w", "--required-words", metavar="word", nargs="*", help="require word in logGroupName")
   parser.add_argument(
@@ -31,7 +39,12 @@ def parse_args():
     default=os.path.expanduser("~/.aws/credentials"), 
     help="path to the credentials file"
   )
-  parser.add_argument("-n", "--no-credentials", action="store_true", help="")
+  parser.add_argument(
+    "-o", "--output", metavar="directory",
+    default="latest_logs-"+datetime.datetime.now().strftime("%Y%m%d%H%M%S"), 
+    help="output directory"
+  )
+  parser.add_argument("-n", "--no-credentials", action="store_true", help="no credentials file")
   # parser.add_argument("file", metavar="input-file", help="input file")
   options = parser.parse_args()
   # if not os.path.isfile(options.file): 
@@ -85,8 +98,7 @@ def main():
       logGroupName=log_group_name,
       orderBy='LastEventTime',
       descending=True,
-        limit=options.streams_limit
-    # )['logStreams']
+      limit=options.streams_limit
     )
     # print("========= streams =========")
     # print(json.dumps(streams, indent=2))
@@ -101,15 +113,15 @@ def main():
   # print(streams)
   streams = [ s for s in streams if "lastIngestionTime" in s.keys() ]  # lastIngestionTimeがないものは除外
   streams.sort(key=lambda x: x['lastIngestionTime'], reverse=True)
-  events = []
   latest_time = None
   for i, s in enumerate(streams):
-    print("========= streams =========")
-    print(s['logGroupName'])
-    if i == 3:
+    events = []
+    # print("========= streams =========")
+    # print(s['logGroupName'])
+    if i == options.dumps_limit:
       break
-    print(s['logGroupName'])
-    print(datetime.datetime.fromtimestamp(s['lastIngestionTime']/1000))
+    # print(s['logGroupName'])
+    # print(datetime.datetime.fromtimestamp(s['lastIngestionTime']/1000))
     init = True
     for j in range(EVENTS_LIMIT):
       if init:
@@ -136,14 +148,23 @@ def main():
       sys.exit()
     for e in events:
       e["timestamp"] = str(datetime.datetime.fromtimestamp(e["timestamp"]/1000))
-      print(e["timestamp"])
-    print(json.dumps(events, indent=2))
+      e["ingestionTime"] = str(datetime.datetime.fromtimestamp(e["ingestionTime"]/1000))
+    if not os.path.isdir(options.output):
+      os.makedirs(options.output)
+    output_file = os.path.join(options.output, f"{i+1:04}.json")
+    with open(output_file, "w") as f:
+      f.write(
+        json.dumps(
+          {
+            "logGroupName": s['logGroupName'],
+            "logStreamName": s['logStreamName'],
+            "events": list(reversed(events))
+          },
+          indent=options.indent
+        )
+      )
+    # print(json.dumps(list(reversed(events)), indent=2))
     # sys.exit()
-
-
-
-
-
 
 if __name__ == '__main__':
   main()
