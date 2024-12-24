@@ -53,21 +53,21 @@ def parse_args():
 
 def main():
   options = parse_args()
-  credentials = options.credentials
   if options.no_credentials:
     client = boto3.client('logs')
   else:
-    if not os.path.isfile(credentials):
+    if not os.path.isfile(options.credentials):
       raise Exception("The credentials file does not exist.")
     else:
-      with open(credentials) as f:
+      with open(options.credentials, mode="r") as f:
         config = configparser.ConfigParser()
-        config.read(credentials)
-        access_key = config['default']['aws_access_key_id']
-        secret_key = config['default']['aws_secret_access_key']
-        # print(access_key)
-        # print(secret_key)
-        client = boto3.client('logs', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        config.read(options.credentials)
+        client = boto3.client(
+          "logs", 
+          aws_access_key_id=config['default']['aws_access_key_id'], 
+          aws_secret_access_key=config['default']['aws_secret_access_key']
+        )
+  del config
   # ロググループを取得
   log_groups = []
   init = True
